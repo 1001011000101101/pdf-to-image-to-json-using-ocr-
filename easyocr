@@ -1,0 +1,42 @@
+import easyocr
+
+def main():
+    # Convert pdf to jpg
+    pdf_converter = PDFConverter()
+    pdf_converter.convert_to_jpg('docs/input/invoices/invoices-ru',
+                                 'docs/input/invoices/processed-invoices-ru/images')
+
+    # define the source and destination directory
+    src_dir = 'docs/input/invoices/processed-invoices-ru/images'
+    dst_dir = '../sparrow-ui/docs/images-invoices-ru'
+ 
+    # Get list of files in source directory
+    files = os.listdir(src_dir)
+
+    # Loop through all files in source directory and copy to destination directory
+    for f in files:
+        src_file = os.path.join(src_dir, f)
+        dst_file = os.path.join(dst_dir, f)
+        shutil.copy(src_file, dst_file)
+
+
+    # OCR
+    #ocr_extractor = OCRExtractor('db_resnet50', 'crnn_vgg16_bn', pretrained=True)
+    #ocr_extractor.extract('docs/input/invoices/processed-invoices-ru', show_prediction=False)
+    reader = easyocr.Reader(['ru','en']) # this needs to run only once to load the model into memory
+    src_dir_ocr = 'docs/input/invoices/processed-invoices-ru/ocr'
+    for f in files:
+        src_file = os.path.join(src_dir, f)
+        thisFile = f
+        base = os.path.splitext(thisFile)[0]
+        #open(path_to_file, mode)
+        #os.rename(thisFile, base + ".json")
+        dst_file = os.path.join(src_dir_ocr, base + ".json")
+        
+        result = reader.readtext(src_file)
+        with open(dst_file, 'w', encoding='utf-8') as fi:
+            fi.write(str(result))
+
+
+if __name__ == '__main__':
+    main()
