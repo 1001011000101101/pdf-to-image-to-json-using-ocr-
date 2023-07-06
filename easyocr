@@ -1,3 +1,7 @@
+from tools.pdf_converter import PDFConverter
+from tools.ocr_extractor import OCRExtractor
+import os
+import shutil
 import easyocr
 
 def main():
