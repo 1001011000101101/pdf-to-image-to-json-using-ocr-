@@ -1,0 +1,125 @@
+from tools.data_converter import DataConverter
+from PIL import Image
+import os
+import shutil
+import json
+
+
+def main():
+    img_dir = 'docs/input/invoices/processed-invoices-ru/images'
+    ocr_dir = 'docs/input/invoices/processed-invoices-ru/ocr'
+    output_dir = 'docs/input/invoices/processed-invoices-ru/output'
+    
+
+    id = 0
+    files = os.listdir(img_dir)
+    #files_ocr = os.listdir(ocr_dir)
+    
+    for f in files:
+        im = Image.open(os.path.join(img_dir, f))
+        w, h = im.size
+        print(f)
+        meta = {}
+        meta['version'] = 'v0.1'
+        meta['split'] = '-'
+        meta['image_id'] = id
+    
+        image_size = {}
+        image_size['width'] = w
+        image_size['height'] = h
+    
+        meta['image_size'] = image_size
+    
+    
+        data = {}
+        data['meta'] = meta
+        words = []
+        
+        thisFile = f
+        base = os.path.splitext(thisFile)[0]
+        
+        with open(os.path.join(ocr_dir, base + '.json'), 'r') as fi:
+            str = fi.read()
+            #print(str)
+            s = str.split("), (")
+            #print(type(s))
+            for i in range(len(s)):
+
+                word = {}
+                rect = {}
+                
+                if i == 0:
+                    s[i] = s[i][2:] #remove two first char
+                if i == len(s) - 1:
+                    s[i] = s[i][:-1] # remove last char
+                    
+                s_ = s[i].split("'")
+                #print(s_[0]) 
+                #print(s_[1]) 
+                word['value'] = s_[1].encode('utf-8').decode('utf-8')
+                word['label'] = ''
+                
+                r = s_[0].split("], [")
+                r[0] = r[0][2:]
+                x1, y1 = r[0].split(", ")
+                rect['x1'] = int(float(x1))
+                rect['y1'] = int(float(y1))
+                
+                x2, y2 = r[2].split(", ")
+                rect['x2'] = int(float(x2))
+                rect['y2'] = int(float(y2))
+                
+                #print(r[2])
+                #print(x)
+                
+                #print(s[i])  
+                
+                word['rect'] = rect
+                
+                words.append(word)
+                #print(word)
+                
+        data['words'] = words
+            #break
+        #f_ocr = open(os.path.join(ocr_dir, base + '.json'), 'r')
+        
+        
+        with open(os.path.join(output_dir, base + '.json'), 'w', encoding='utf-8') as fi:
+            fi.write(json.dumps(data, ensure_ascii=False))
+        #json_data = json.dumps(data)
+        #print('json_data: ', json_data)
+        
+        
+        
+        #break
+        id += 1
+        #print('width: ', w)
+        #print('height:', h)
+        #src_file = os.path.join(src_dir, f)
+        #dst_file = os.path.join(dst_dir, f)
+        #shutil.copy(src_file, dst_file)
+
+
+
+'''
+    # Convert to sparrow format
+    data_converter = DataConverter()
+    data_converter.convert_to_sparrow_format('docs/input/invoices/processed-invoices-ru/ocr',
+                                             'docs/input/invoices/processed-invoices-ru/output')
+
+    # define the source and destination directory
+    src_dir = 'docs/input/invoices/processed-invoices-ru/output'
+    dst_dir = '../sparrow-ui/docs/json-invoices-ru'
+
+    # Get list of files in source directory
+    files = os.listdir(src_dir)
+
+    # Loop through all files in source directory and copy to destination directory
+    for f in files:
+        src_file = os.path.join(src_dir, f)
+        dst_file = os.path.join(dst_dir, f)
+        shutil.copy(src_file, dst_file)
+
+'''
+if __name__ == '__main__':
+    main()
